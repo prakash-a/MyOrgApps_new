@@ -1,0 +1,12 @@
+<project name="Sample usage of Salesforce Ant tasks" default="test" besedir="." xmlns:sf="antlib:com.salesforce">
+	<target name="test-guspatchtest">
+		<sf:deploy>
+			username="avulaprakash@gmail.com"
+			password="Prakash_1234"
+			runAllTests="true"
+			serverurl="https://login.salesforce.com"
+			deployroot="src"
+			maxPoll="10"
+			pollWaitMillis="1200000"/>
+	</target>
+</project>
