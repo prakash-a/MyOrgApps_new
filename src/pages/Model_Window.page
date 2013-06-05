@@ -1,0 +1,13 @@
+<apex:page controller="modelWindow">
+    <h1>Congratulations</h1>
+    <apex:form > 
+        
+      <apex:commandButton value="Click" action="{!clickBtn}" reRender="compo" />
+    
+    <c:popupWindow show="{!blnShowHide}" id="compo" />  
+<!--    <c:javascriptPopUpWindow show="{!blnShowHide}" id="compo1" /> -->
+    
+    </apex:form>
+    
+    
+</apex:page>

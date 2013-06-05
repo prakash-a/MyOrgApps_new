@@ -1,0 +1,212 @@
+<apex:page controller="SL_LIB22_MeetingLog_Report" sideBar="false" showHeader="false" renderAs="pdf">
+    <apex:form >
+    <head>
+        <style>
+                @page
+                {
+                    size: A4 Potrait;
+                    margin: 10mm;
+                    @bottom-right
+                    {
+                        content: element(footer);
+                    }
+                }
+
+                @media print
+                {
+                    thead { display:table-header-group }
+                }
+
+                table
+                {
+                	page-break-inside: avoid;
+                }
+
+                div.footer
+                {
+                    display: block;
+                    padding: 5px;
+                    position: running(footer);
+                    text-align: right;
+                    font-size: 10pt;
+                    padding-bottom: 10px;
+                }
+                .pagenumber:before
+                {
+                    content: counter(page);
+                }
+                .pagecount:before
+                {
+                    content: counter(pages);
+                }
+                .reportTitle
+                {
+                    -fs-table-paginate: paginate;
+                    font-family:sans-serif;
+                    font-size: 12pt;
+                    thead { display:table-header-group };
+                }
+                .fontSize
+                {
+                    font-size: 12pt;
+                }
+                tr
+                {
+                    border-collapse: collapse;
+                }
+                .bottomBorder
+                {
+                    border-bottom: 1px solid;
+                }
+                .recordfontSize
+                {
+                    font-size: 10pt;
+                }
+
+
+        </style>
+    </head>
+        <body>
+            <table class="reportTitle" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <thead>
+                    <tr>
+                        <td><br></br></td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;" colspan="2" width="50%">
+                            <span style="font-weight: bold;font-size: large;">Meeting Note Report</span>
+                        </td>
+                        <td style="text-align: center;" colspan="1">
+                            <span style="color: red;font-size: large; font-weight: bold;">CONFIDENTIAL</span>
+                        </td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><br></br><br></br><br></br><br></br></td>
+                    </tr>
+                    <apex:repeat value="{!$ObjectType.Task.FieldSets.SL_TaskFieldSets}" var="e" rendered="{!IF(NOT(ISBLANK(objTask.id)), true, false) }">
+                        <tr>
+                            <td style="text-align: left; width: 35%;" colspan="1" >
+                                <apex:outputLabel value="{!e.label}" />
+                            </td>
+                            <td style="text-align: center;" colspan="1">
+                                <span > : </span>
+                            </td>
+                            <td style="text-align: left; width: 65%" >
+                                <apex:outputPanel >
+									<apex:outputField value="{!objTask[e]}" rendered="{!If(AND(objTask[e] != true, objTask[e] != false), true, false)}" />
+									<apex:outputPanel rendered="{!If(objTask[e] == false, true, false)}">
+										<img src="{!($Resource.SL_MeetingLog_UnChecked_Checkbox)}" />
+									</apex:outputPanel>
+									<apex:outputPanel rendered="{!If(objTask[e] == true, true, false)}">
+										<img src="{!($Resource.SL_MeetingLog_Checked_Checkbox)}" />
+									</apex:outputPanel>
+								</apex:outputPanel>
+
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                    <apex:repeat value="{!$ObjectType.Event.FieldSets.SL_EventFieldSets}" var="e" rendered="{!IF(NOT(ISBLANK(objEvent.id)), true, false) }">
+                        <tr>
+                            <td style="text-align: left; width: 35%;" colspan="1" >
+                                <apex:outputLabel value="{!e.label}" />
+                            </td>
+                            <td style="text-align: center;" colspan="1">
+                                <span > : </span>
+                            </td>
+                            <td style="text-align: left; width: 65%" >
+                                <apex:outputField value="{!objEvent[e]}" rendered="{!If(AND(objEvent[e] != true, objEvent[e] != false), true, false)}" />
+									<apex:outputPanel rendered="{!If(objEvent[e] == false, true, false)}">
+										<img src="{!($Resource.SL_MeetingLog_UnChecked_Checkbox)}" />
+									</apex:outputPanel>
+									<apex:outputPanel rendered="{!If(objEvent[e] == true, true, false)}">
+										<img src="{!($Resource.SL_MeetingLog_Checked_Checkbox)}" />
+									</apex:outputPanel>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                    <tr>
+                        <td>
+                            <br/><br/>
+                            <br/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table class="reportTitle" width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tbody>
+                    <tr>
+                        <td>
+                            <c:SL_LIB22_MeetingSObject type="Report"
+                                                    customLabel="{!$Label.SL_ExternalParticipants}"
+                                                    SObjectName="MeetingAttendee__c"
+                                                    meetingLogId="{!strMeetingLogId}" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <c:SL_LIB22_MeetingSObject type="Report"
+                                                    customLabel="{!$Label.SL_Participants}"
+                                                    SObjectName="MeetingStaff__c"
+                                                    meetingLogId="{!strMeetingLogId}" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <c:SL_LIB22_MeetingSObject type="Report"
+                                                    customLabel="{!$Label.SL_Companies}"
+                                                    SObjectName="MeetingCompany__c"
+                                                    meetingLogId="{!strMeetingLogId}" />
+                        </td>
+                    </tr>
+                    <tr>
+						<td>
+							<table width="100%" class="reportTitle" cellspacing="0" cellpadding="0" >
+								<thead>
+									<tr>
+										<th class="bottomBorder">
+											<span style="font-size: 12pt;font-weight: bold"> {!$Label.SL_FollowUpTask}</span>
+										</th>
+									</tr>
+									<tr>
+										<apex:repeat value="{!$ObjectType.Task.FieldSets.SL_FollowUpTask_FieldSets}" var="e">
+											<th width="15%">
+												<span style="font-weight: bold" class="fontSize">
+													{!e.Label}
+												</span>
+											</th>
+										</apex:repeat>
+									</tr>
+									<tr>
+										<td style="border-top: 1px solid;" colspan="{!$ObjectType.Task.FieldSets.SL_FollowUpTask_FieldSets.size}"></td>
+									</tr>
+								</thead>
+								<tbody>
+									<apex:repeat value="{!lstFTSObjectData}" var="item" rendered="{!lstFTSObjectData.size != 0}">
+										<tr style="page-break-inside: avoid !important;">
+											<apex:repeat value="{!$ObjectType.Task.FieldSets.SL_FollowUpTask_FieldSets}" var="e">
+												<td class="recordfontSize">
+								                	<apex:outputText value="{!item.objSobject[e]}" />
+												</td>
+											</apex:repeat>
+										</tr>
+									</apex:repeat>
+									<tr>
+										<td>
+											<apex:outputLabel value="No Records to display" style="font-family: Arial; font-size: 10pt;" rendered="{!lstFTSObjectData.size == 0 }" />
+										</td>
+									</tr>
+									<tr>
+										<td style="border-top: 1px solid;" colspan="{!$ObjectType.Task.FieldSets.SL_FollowUpTask_FieldSets.size}"><br /><br /></td>
+									</tr>
+								</tbody>
+							</table>
+						</td>
+					</tr>
+                </tbody>
+            </table>
+        </body>
+        </apex:form>
+    </apex:page>

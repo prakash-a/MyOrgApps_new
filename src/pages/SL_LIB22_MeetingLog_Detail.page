@@ -1,0 +1,125 @@
+<apex:page controller="SL_LIB22_MeetingLog_Detail" tabStyle="Task" title="Meeting Log Creator">
+    <apex:sectionHeader title="Meeting Note" subTitle="{!strTaskSub}"/>
+
+    <apex:form id="form">
+        <apex:outputPanel >
+            <apex:pageMessages />
+        </apex:outputPanel>
+
+<!--    Start of Task Page Block-->
+        <apex:pageBlock >
+
+<!--         Start Page Block Buttons-->
+            <apex:pageBlockButtons >
+                 <apex:commandButton action="{!editRedirect}" value="Edit" rerender="pbo,form"/>
+                 <apex:commandButton value="{!$Label.SL_Multi_Connect_GeneratePDF_Reports}" action="{!generatePDFReport}" rerender="pbo,form" rendered="{!IF(AND(lstMultiConnect.size > 0, lstMultiConnect[0].PDF_Report__c == true), true, false)}"/>
+                 <apex:commandButton value="{!$Label.SL_Multi_Connect_Send_An_Email}" action="{!redirectSendEmail}" rerender="pbo,form" rendered="{!IF(AND(lstMultiConnect.size > 0, lstMultiConnect[0].Sent_an_Email__c == true), true, false)}"/>
+            </apex:pageBlockButtons>
+
+<!--         End of Page Block Buttons-->
+<!--Start of Meeting Detail Section-->
+            <apex:pageBlockSection title="Meeting Details" id="pbs0" columns="2">
+                <apex:facet name="header">
+                    <span style="color: black">Meeting Details</span>
+                </apex:facet>
+                <apex:repeat value="{!$ObjectType.Task.FieldSets.SL_TaskFieldSets}" var="f">
+                    <apex:outputField value="{!objTask[f]}" rendered="{!IF(AND(strCheck == 'Task',f.Label != 'Parent Task'),true,false)}"/>
+                    <apex:outputText value="{!objTask[f]}" rendered="{!(IF(AND(strCheck == 'Task', f.Label == 'Parent Task', objTask.ParentTaskId__c != $CurrentPage.Parameters.Id),true,false))}" escape="false"/>
+                </apex:repeat>
+                <apex:repeat value="{!$ObjectType.Event.FieldSets.SL_EventFieldSets}" var="e">
+                    <apex:outputField value="{!objEvent[e]}" rendered="{!IF(AND(strCheck == 'Event', e.Label != 'Parent Task'),true,false)}"/>
+                    <apex:outputText value="{!objEvent[e]}" rendered="{!(IF(AND(strCheck == 'Event', e.Label == 'Parent Task', objEvent.ParentTaskId__c != $CurrentPage.Parameters.Id),true,false))}" escape="false"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+<!-- End of Meeting Detail Section-->
+
+<!--Start of Meeting Notes Section-->
+            <apex:pageBlockSection title="Meeting Notes" id="pbs1" columns="1">
+                <apex:facet name="header">
+                    <span style="color: black">Meeting Notes</span>
+                </apex:facet>
+                <div style="width:20%;display:inline;" >
+                    <apex:repeat value="{!$ObjectType.Task.FieldSets.SL_Task_MeetingLogDetails_FieldSets}" var="f">
+                        <apex:outputField value="{!objTask[f]}" style="width:790px; height:100px;" rendered="{!IF(strCheck == 'Task', true, false)}"/>
+                    </apex:repeat>
+                    <apex:repeat value="{!$ObjectType.Event.FieldSets.SL_Event_MeetingLogDetails_FieldSets}" var="e">
+                        <apex:outputField value="{!objEvent[e]}" style="width:790px; height:100px;" rendered="{!IF(strCheck == 'Event', true, false)}"/>
+                    </apex:repeat>
+                </div>
+            </apex:pageBlockSection>
+<!--  End of Meeting Notes Section-->
+        </apex:pageBlock>
+<!--    End of Task Page Block-->
+
+<!-- Start - Meeting Attendee -->
+
+        <c:SL_LIB22_MeetingSObject type="Detail"
+                                customLabel="{!$Label.SL_ExternalParticipants}"
+                                SObjectName="MeetingAttendee__c"
+                                meetingLogId="{!strMeetingLogId}" />
+
+<!-- End - Meeting Attendee -->
+
+<!-- Start - Meeting Staff -->
+
+        <c:SL_LIB22_MeetingSObject type="Detail"
+                                customLabel="{!$Label.SL_Participants}"
+                                SObjectName="MeetingStaff__c"
+                                meetingLogId="{!strMeetingLogId}" />
+
+<!-- End - Meeting Staff -->
+
+<!-- Start - Meeting Company -->
+
+        <c:SL_LIB22_MeetingSObject type="Detail"
+                                customLabel="{!$Label.SL_Companies}"
+                                SObjectName="MeetingCompany__c"
+                                meetingLogId="{!strMeetingLogId}" />
+
+<!-- End - Meeting Company -->
+
+<!-- Start - FollowUpTask -->
+        <apex:pageBlock id="pbMFollowUpTask" title="{!$Label.SL_FollowUpTask}" rendered="{!IF(AND(lstMultiConnect.size > 0,lstMultiConnect[0].FollowUp_Task__c == true, OR(objTask.ParentTaskId__c == $CurrentPage.Parameters.aid, objEvent.ParentTaskId__c == $CurrentPage.Parameters.aid)),true,false)}">
+            <apex:pageBlockTable id="pbTMFollowUpTask" value="{!lstFTSObjectData}" var="item" rows="1000" rendered="{!lstFTSObjectData.size != 0}">
+                <apex:column width="10%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" action="{!deleteRecord}" rerender="pbMFollowUpTask" style="color:#015BA7;" status="loading">
+                            <apex:param value="FollowUpTask" name="Delete FollowUp Task Record" assignTo="{!strDelete}"/>
+                            <apex:param value="true" name="Del" assignTo="{!item.isDelete}"/>
+                            <apex:param value="{!item.strMSobjectId}" name="Del" assignTo="{!strMSobjectId}"/>
+                        </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+                <apex:repeat value="{!$ObjectType.Task.FieldSets.SL_FollowUpTask_FieldSets}" var="e">
+               		<apex:column width="10%" headerValue="{!e.Label}" >
+                    	<apex:outputField value="{!item.objSobject[e]}"/>
+                	</apex:column>
+                </apex:repeat>
+            </apex:pageBlockTable>
+
+			<c:SL_LIB22_MeetingSObject_NoRecords SObjectName="Task" isRecordPresent="{!lstFTSObjectData.size == 0}" />
+
+        </apex:pageBlock>
+<!-- End - FollowUpTask -->
+
+    <apex:actionstatus id="loading" startText="Requesting...">
+         <apex:facet name="start">
+            <div id="salesforceSource_blurybackground" style="position:absolute; left:1px; top:1px; width:100%; height:100%; text-align:center; vertical-align: middle; background-color: #dcdcdc; opacity:0.7;filter:alpha(opacity=60)"></div>
+            <div id="ManageMembersViewport_loading" class="waitingSearchDiv" style="width: 100%; height: 80%; display: ''; ">
+                <div style="width: 144px;vertical-align: middle;" class="waitingHolder">
+                <table align="center" valign="top" style="width: 100%; height: 30%">
+                <tr align="center" valign="top" style="width: 100%; height: 30%">
+                    <td valign="top"><img src="/img/loading.gif"/><span class="waitingDescription">Loading...</span></td>
+                </tr>
+                </table>
+                </div>
+            </div>
+            <div id="ManageMembersViewport_loading" class="waitingSearchDiv" style="width: 100%; height: 100%; display: ''; "> </div>
+            <script>document.getElementById('ManageMembersViewport_loading').height = window.innerHeight * (3/4);</script>
+         </apex:facet>
+         <apex:facet name="stop"></apex:facet>
+      </apex:actionstatus>
+
+    </apex:form>
+
+</apex:page>

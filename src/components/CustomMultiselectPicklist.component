@@ -1,0 +1,127 @@
+<apex:component controller="customMultiselectPicklist">
+  <apex:attribute name="leftLabel" description="Label on left listbox." type="String" required="true" /> 
+  <apex:attribute name="rightLabel" description="Label on right listbox." type="String" required="true" />
+  <apex:attribute name="size" description="Size of listboxes." type="Integer" required="true" />
+  <apex:attribute name="width" description="Width of listboxes." type="String" required="true" />
+
+<!--   <apex:attribute name="leftOptions" -->
+<!--     description="Options list for left listbox." type="SelectOption[]" -->
+<!--     required="true" assignTo="{!leftOptions}" /> -->
+<!--   <apex:attribute name="rightOptions" -->
+<!--     description="Options list for right listbox." type="SelectOption[]" -->
+<!--     required="true" assignTo="{!rightOptions}" /> -->
+
+  <apex:attribute name="leftOptions"
+    description="Options list for left listbox." type="String[]"
+    required="true" assignTo="{!lstNewLeftOptions}"/>
+
+  <apex:outputPanel id="multiselectPanel" layout="block" styleClass="duelingListBox">
+    <table class="layout">
+      <tbody>
+        <tr>
+          <td class="selectCell">
+            <apex:outputPanel layout="block" styleClass="selectTitle">
+              <!-- 
+                Visualforce prepends the correct prefix to the outputLabel's 'for' attribute
+              -->
+              <apex:outputLabel value="{!leftLabel}" 
+                for="multiselectPanel:leftList" />
+            </apex:outputPanel>
+            <apex:selectlist value="{!leftselected}" multiselect="true"  size="{!size}" style="width: {!width};"> 
+            	<apex:selectOptions value="{!unSelectedValues}"/>
+            </apex:selectlist>	
+          </td>
+          <td class="buttonCell">
+            <apex:outputPanel layout="block" styleClass="text">Add</apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="text">
+<!--               <apex:outputLink value="javascript:moveSelectedOptions('{!$Component.multiselectPanel}:leftList',  -->
+<!--                   '{!$Component.multiselectPanel}:rightList', '{!$Component.leftHidden}',  -->
+<!--                   '{!$Component.rightHidden}');" -->
+<!--                 id="btnRight"> -->
+				<apex:image value="/s.gif" alt="Add" styleClass="rightArrowIcon" title="Add" >
+                	<apex:actionSupport event="onclick" action="{!selectclick}" reRender="multiselectPanel"/>
+                </apex:image>
+<!--               </apex:outputLink> -->
+            </apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="text">
+<!--               <apex:outputLink value="javascript:moveSelectedOptions('{!$Component.multiselectPanel}:rightList',  -->
+<!--                   '{!$Component.multiselectPanel}:leftList', '{!$Component.rightHidden}',  -->
+<!--                   '{!$Component.leftHidden}');" -->
+<!--                 id="btnLeft"> -->
+                <apex:image value="/s.gif" alt="Remove" styleClass="leftArrowIcon" title="Remove">
+                	<apex:actionSupport event="onclick" action="{!unselectclick}" reRender="multiselectPanel"/>
+                </apex:image>
+<!--               </apex:outputLink> -->
+            </apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="duelingText">Remove</apex:outputPanel>
+          </td>
+          <td class="selectCell">
+            <apex:outputPanel layout="block" styleClass="selectTitle">
+              <apex:outputLabel value="{!rightLabel}" for="multiselectPanel:rightList" />
+            </apex:outputPanel>
+            <apex:selectlist value="{!rightselected}" multiselect="true" size="{!size}" style="width: {!width};">
+            	<apex:selectOptions value="{!SelectedValues}"/>
+            </apex:selectlist>	
+          </td>
+          <td class="buttonCell">
+          	<apex:outputPanel layout="block" styleClass="text">Top</apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="text">
+              <!-- 
+              <apex:outputLink value="javascript:slideSelectedOptionsUp('{!$Component.multiselectPanel}:rightList', 
+                  '{!$Component.rightHidden}');"
+                id="upBtn"> -->
+                <apex:image value="/s.gif" alt="Top" styleClass="doubleArrowUp" title="Top" >
+                  	<apex:actionSupport event="onclick" action="{!sortValues}" reRender="multiselectPanel">
+                  		<apex:param name="sortTypeParam" assignTo="{!sortTypeParam}" value="Top" id="paramTop"/>
+                  	</apex:actionSupport>
+                </apex:image>
+<!--               </apex:outputLink> -->
+            </apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="text">Up</apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="text">
+              <!-- 
+              <apex:outputLink value="javascript:slideSelectedOptionsUp('{!$Component.multiselectPanel}:rightList', 
+                  '{!$Component.rightHidden}');"
+                id="upBtn"> -->
+                <apex:image value="/s.gif" alt="Up" styleClass="upArrowIcon" title="Up" >
+                  	<apex:actionSupport event="onclick" action="{!sortValues}" reRender="multiselectPanel">
+                  		<apex:param name="sortTypeParam" assignTo="{!sortTypeParam}" value="Up" id="paramUp"/>
+                  	</apex:actionSupport>
+                </apex:image>
+<!--               </apex:outputLink> -->
+            </apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="text">
+<!--               <apex:outputLink value="javascript:slideSelectedOptionsDown('{!$Component.multiselectPanel}:rightList',  -->
+<!--                   '{!$Component.rightHidden}');" -->
+<!--                 id="downBtn"> -->
+                <apex:image value="/s.gif" alt="Down" styleClass="downArrowIcon"
+                  title="Down" >
+                  <apex:actionSupport event="onclick" action="{!sortValues}" reRender="multiselectPanel">
+                  	<apex:param name="sortTypeParam" assignTo="{!sortTypeParam}" value="Down" id="paramDown"/>
+                  </apex:actionSupport>
+                </apex:image>  
+<!--               </apex:outputLink> -->
+            </apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="text">Down</apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="text">
+              <!-- 
+              <apex:outputLink value="javascript:slideSelectedOptionsUp('{!$Component.multiselectPanel}:rightList', 
+                  '{!$Component.rightHidden}');"
+                id="upBtn"> -->
+                <apex:image value="/s.gif" alt="Bottom" styleClass="doubleArrowDwn" title="Bottom" >
+                  	<apex:actionSupport event="onclick" action="{!sortValues}" reRender="multiselectPanel">
+                  		<apex:param name="sortTypeParam" assignTo="{!sortTypeParam}" value="Bottom" id="paramBottom"/>
+                  	</apex:actionSupport>
+                </apex:image>
+<!--               </apex:outputLink> -->
+            </apex:outputPanel>
+            <apex:outputPanel layout="block" styleClass="text">Bottom</apex:outputPanel>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+<!--     <apex:inputHidden value="{!leftOptionsHidden}" id="leftHidden" /> -->
+<!--     <apex:inputHidden value="{!rightOptionsHidden}" id="rightHidden" /> -->
+  </apex:outputPanel>
+ 
+</apex:component>

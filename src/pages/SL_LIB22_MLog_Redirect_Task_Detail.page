@@ -1,0 +1,2 @@
+<apex:page standardcontroller="Task" extensions="SL_LIB22_MeetingLog_Redirect" action="{!RedirectTaskDetail}">
+</apex:page>

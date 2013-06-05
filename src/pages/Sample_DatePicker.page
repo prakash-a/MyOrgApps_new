@@ -1,0 +1,15 @@
+<apex:page controller="sampleDatePicker">
+	<apex:form id="formId">
+		<script type="text/javascript">
+			 function DynamicDatePicker(d_id)
+	         {
+	            DatePicker.pickDate(true,d_id.id,false);
+	         }
+		</script>
+			
+	    <apex:inputText id="inputDate" value="{!dateValue}" onfocus="DynamicDatePicker(this);" disabled="false" size="20" style="width:150px;"/>	    
+	    <a href="javascript:DatePicker.insertDate('{!Value}', '{!$Component.inputDate}', true);">
+	     {!Value}
+	    </a>
+	</apex:form>      
+</apex:page>

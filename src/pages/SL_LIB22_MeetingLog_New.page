@@ -1,0 +1,559 @@
+<apex:page controller="SL_LIB22_MeetingLog_New" id="p0" title="Meeting Log Creator">
+    <script>
+        function limitChar(e, obj, length)
+        {
+            var event = e;
+            var charCode = e.which || e.keyCode;
+            var maxlength=length;
+            if (charCode > 31 && charCode < 126)
+            {
+                if(obj.value.length >= maxlength && (charCode != 35 && charCode != 36 && charCode != 37 &&  charCode != 38 && charCode != 39 && charCode != 40 && charCode != 46))
+                {
+                    alert('Please enter a maximum of 40 characters.');
+                    obj.value=obj.value.substring(0, maxlength);
+                }
+            }
+        }
+
+        /*For Open the PopUp URL*/
+         function openWind(URL)
+         {
+             curPopupWindow  = window.open(URL, "_blank","width=500, height=500,dependent=no,toolbar=no,status=no,directories=no,menubar=no,scrollbars=1,resizable=no", true);
+         }
+
+		/*To Open Related To PopUp*/
+         function openRelatedToPopup(obj,id)
+         {
+             currConColumn = obj;
+             var likeString = '';
+             likeString = document.getElementById(id).value;
+             var url ;
+             url = "SL_LIB22_RelatedToCustomLookup?likestring=" + likeString;
+             openWind(url);
+             return false;
+         }
+
+         /*To Set the selected Details Of the Related to from the popup window*/
+         function setSelectedRelatedToDetails(Id, Name)
+         {
+             var inputArr = currConColumn.getElementsByTagName('input');
+             inputArr[0].value = Id;
+             inputArr[1].value = Name;
+             //confId = Id;
+             curPopupWindow.close();
+             currConColumn = null;
+         }
+         /* Related To Section */
+
+
+    </script>
+    <apex:outputPanel id="Test"/>
+    <apex:sectionHeader title="{!$Label.SL_Task}" subTitle="{!strTaskLabel}"/>
+    <apex:form id="form">
+    <apex:outputPanel rendered="{!isTaskEventPresent}">
+        <apex:pageMessages id="ErrorMessage"/>
+    </apex:outputPanel>
+
+    <apex:outputPanel rendered="{!(!isTaskEventPresent)}">
+        <apex:pageMessages />
+        <apex:outputLink value="/setup/ui/viewCustomSettingsData.apexp?id={!lstMultiConnect[0].Id}" target="_blank" >Please click here to change settings</apex:outputLink>
+    </apex:outputPanel>
+
+    <apex:outputPanel rendered="{!lstMultiConnect.size > 0}">
+<!--Start of Task Page Block-->
+        <apex:outputPanel rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].Create_Tasks__c, strCheck == 'Task'), true, false)}">
+            <apex:pageBlock >
+<!-- Start Page Block Buttons-->
+                <apex:pageBlockButtons >
+                     <apex:commandButton action="{!SaveRedirect}" value="Save" rerender="ErrorMessage,pbo,form"/>
+                     <apex:commandButton action="{!MainCancel}" value="Cancel" rerender="Test" immediate="true"/>
+                </apex:pageBlockButtons>
+<!-- End of Page Block Buttons-->
+<!--Start of Meeting Detail Section-->
+                <apex:pageBlockSection title="Meeting Task Details" id="pbst0" columns="2" >
+                     <apex:facet name="header">
+                        <span style="color: black">Meeting Details</span>
+                    </apex:facet>
+                    <apex:pageblocksectionItem >
+                        <apex:outputLabel value="Subject" />
+                        <apex:inputField value="{!objTask.Subject}" required="true" />
+                    </apex:pageblocksectionItem>
+                    <apex:pageblocksectionItem >
+                        <apex:outputLabel value="Priority" />
+                        <apex:inputField value="{!objTask.Priority}" required="true" />
+                    </apex:pageblocksectionItem>
+                    <apex:pageblocksectionItem >
+                        <apex:outputLabel value="Status" />
+                        <apex:inputField value="{!objTask.Status}" required="true" />
+                    </apex:pageblocksectionItem>
+
+                    <apex:pageblocksectionItem rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].Custom_Lookup_Related_To__c), true, false)}">
+		            	<apex:outputLabel value="Related To" />
+			            <apex:outputPanel >
+			            	<apex:selectList id="chooseRelatedTo" value="{!strSelectRelatedTo}" size="1">
+								<apex:selectOption itemValue="Account" itemLabel="Account"/>
+							</apex:selectList>
+							&nbsp;&nbsp;
+							<apex:inputHidden value="{!selectedRelatedId}" id="RelatedId" />
+							<apex:inputText value="{!selectedRelatedName}" id="RelatedName" />
+
+							<a href ="" style="cursor: pointer" onclick="javascript:return openRelatedToPopup(this.parentNode,('{!$Component.chooseRelatedTo}'))">
+								<img src="/s.gif" alt="Course Lookup (New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';"
+							     	 onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';"
+							     	 onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Related To Lookup (New Window)" />
+							</a>
+						</apex:outputPanel>
+					</apex:pageblocksectionItem>
+
+                    <apex:pageblocksectionItem rendered="{!If(AND(lstMultiConnect.size > 0, NOT(lstMultiConnect[0].Custom_Lookup_Related_To__c)), true, false)}">
+                        <apex:outputLabel value="Related To" />
+                        <apex:inputField value="{!objTask.WhatId}" required="true" />
+                    </apex:pageblocksectionItem>
+                        <apex:repeat value="{!$ObjectType.Task.FieldSets.SL_TaskFieldSets}" var="f"  >
+                            <apex:inputField value="{!objTask[f]}" required="{!f.Required}" rendered="{!IF(AND(strCheck == 'Task', f != 'WhatId', f.Label != 'Parent Task', f.Label != 'Subject', f.Label != 'Priority', f.Label != 'Status'),true, false)}"/>
+                        </apex:repeat>
+                </apex:pageBlockSection>
+
+<!-- End of Meeting Detail Section-->
+
+<!--Start of Meeting Notes Section-->
+                <apex:pageBlockSection title="Meeting Notes" id="pbst1" columns="1">
+                 <apex:facet name="header">
+                        <span style="color: black">Meeting Notes</span>
+                    </apex:facet>
+                    <apex:repeat value="{!$ObjectType.Task.FieldSets.SL_Task_MeetingLogDetails_FieldSets}" var="f">
+                        <apex:inputField value="{!objTask[f]}" style="width:790px; height:100px;" required="{!f.Required}"/>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+<!--  End of Meeting Notes Section-->
+            </apex:pageBlock>
+
+<!--    Attendee Page Block -->
+        <apex:pageBlock id="attendees" title="{!$Label.SL_ExternalParticipants}" rendered="{!(IF(OR(objTask.ParentTaskId__c == null,objTask.ParentTaskId__c == $CurrentPage.Parameters.Id),true,false))}">
+            <apex:pageBlockButtons style="border-top: 0px;" location="top">
+                <apex:commandButton action="{!addRow}" value="{!$Label.SL_AddAttendee}" rerender="form" status="loading">
+                    <apex:param value="Attendee" name="Add Attendee Record" assignTo="{!strAddRow}"/>
+                </apex:commandButton>
+            </apex:pageBlockButtons>
+            <apex:outputPanel id="ErrorAttendee" rendered="{!isAttendeeError}">
+                <apex:pageMessage summary="Duplicate Attendee {!strDuplicateDetails} Found" severity="warning" strength="3"/>
+            </apex:outputPanel>
+            <apex:pageBlockTable id="attendeesTable" value="{!lstMAttendee}" var="item" rows="1000" rendered="{!lstMAttendee.size != 0}">
+                <apex:column width="10%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" action="{!deleteRecord}" status="loading" rerender="attendees" style="color: #015BA7;">
+                            <apex:param value="Attendee" name="Delete Attendee Record" assignTo="{!strDelete}"/>
+                            <apex:param value="true" name="Del" assignTo="{!item.isDelete}"/>
+                        </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+
+                <apex:column headerValue="Attendee" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].AutoComplete_For_RelatedList__c), true, false)}">
+
+	                <apex:inputText id="inputTxtId" value="{!item.strSObjectName}" required="true" rendered="{!item.strMSobjectId == ''}">
+		            	<c:SL_LIB32_AutoComplete objectname="MeetingAttendee__c" queryObjectName="Contact" autocomplete_textbox="{!$Component.inputTxtId}" isInlineVF="true" bgColor="#ADD8E6" fontSize="11" />
+		            	<apex:inputhidden id="inputTxtId_lkid" value="{!item.strSObjectId}" />
+		        	</apex:inputText>
+
+		        	<apex:outputField value="{!item.objSObject['Attendee__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.strMSobjectId)), NOT(ISBLANK(item.strMSobjectId))), true, false)}" />
+		        </apex:column>
+
+		        <apex:column headerValue="Attendee" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, NOT(lstMultiConnect[0].AutoComplete_For_RelatedList__c)), true, false)}">
+		        	<apex:outputField value="{!item.objSObject['Attendee__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.objSObject.Id)), NOT(ISBLANK(item.objSObject.Id))), true, false)}" />
+		        	<apex:inputField value="{!item.objSObject['Attendee__c']}"  rendered="{!IF(item.strMSobjectId == '', true, false)}" />
+		        </apex:column>
+
+                <apex:repeat value="{!$ObjectType.MeetingAttendee__c.FieldSets.SL_MeetingAttendee_Fieldsets}" var="e">
+               		<apex:column width="10%" headerValue="{!e.Label}" rendered="{!e.Label != 'Attendee'}" >
+                    	<apex:inputField value="{!item.objSObject[e]}"/>
+                	</apex:column>
+                </apex:repeat>
+
+            </apex:pageBlockTable>
+
+            <c:SL_LIB22_MeetingSObject_NoRecords SObjectName="MeetingAttendee__c" isRecordPresent="{!lstMAttendee.size == 0}" />
+
+        </apex:pageBlock>
+<!--  End Of Attendee Page BLock   -->
+<!--Staff Page Block-->
+        <apex:pageBlock id="staff" title="{!$Label.SL_Participants}" rendered="{!(IF(OR(objTask.ParentTaskId__c == null,objTask.ParentTaskId__c == $CurrentPage.Parameters.Id),true,false))}">
+            <apex:pageBlockButtons style="border-top: 0px;" location="top">
+                <apex:commandButton action="{!addRow}" value="{!$Label.SL_AddStaff}" rerender="form" status="loading">
+                    <apex:param value="Staff" name="Add Staff Record" assignTo="{!strAddRow}"/>
+                </apex:commandButton>
+            </apex:pageBlockButtons>
+            <apex:outputPanel id="ErrorStaff" rendered="{!isStaffError}">
+                <apex:pageMessage summary="Duplicate Staff {!strDuplicateDetails} Found" severity="warning" strength="3"/>
+            </apex:outputPanel>
+            <apex:pageBlockTable id="attendeesTable" value="{!lstMStaff}" var="item" rows="1000" rendered="{!lstMStaff.size != 0}">
+                <apex:column width="10%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" action="{!deleteRecord}" status="loading" rerender="staff" style="color: #015BA7;">
+                            <apex:param value="Staff" name="Delete Staff Record" assignTo="{!strDelete}"/>
+                            <apex:param value="true" name="Del" assignTo="{!item.isDelete}"/>
+                         </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+
+                <apex:column headerValue="Employee" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].AutoComplete_For_RelatedList__c), true, false)}">
+	                <apex:inputText id="inputTxtId" value="{!item.strSObjectName}" required="true" rendered="{!item.strMSobjectId == ''}">
+		            	<c:SL_LIB32_AutoComplete objectname="MeetingAttendee__c" queryObjectName="Contact" autocomplete_textbox="{!$Component.inputTxtId}" isInlineVF="true" bgColor="#ADD8E6" fontSize="11" />
+		            	<apex:inputhidden id="inputTxtId_lkid" value="{!item.strSObjectId}" />
+		        	</apex:inputText>
+
+		        	<apex:outputField value="{!item.objSObject['Contact__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.strMSobjectId)), NOT(ISBLANK(item.strMSobjectId))), true, false)}" />
+		        </apex:column>
+
+		        <apex:column headerValue="Employee" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, NOT(lstMultiConnect[0].AutoComplete_For_RelatedList__c)), true, false)}">
+		        	<apex:outputField value="{!item.objSObject['Contact__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.objSObject.Id)), NOT(ISBLANK(item.objSObject.Id))), true, false)}" />
+		        	<apex:inputField value="{!item.objSObject['Contact__c']}"  rendered="{!IF(item.strMSobjectId == '', true, false)}" />
+		        </apex:column>
+
+				<apex:repeat value="{!$ObjectType.MeetingStaff__c.FieldSets.SL_MeetingStaff_Fieldsets}" var="e">
+               		<apex:column width="10%" headerValue="{!e.Label}" rendered="{!e.Label != 'Employee'}">
+                    	<apex:inputField value="{!item.objSObject[e]}"/>
+                	</apex:column>
+                </apex:repeat>
+
+            </apex:pageBlockTable>
+            <c:SL_LIB22_MeetingSObject_NoRecords SObjectName="MeetingStaff__c" isRecordPresent="{!lstMStaff.size == 0}" />
+        </apex:pageBlock>
+<!--End of Staff Page Block -->
+<!--Company Page Block-->
+        <apex:pageBlock id="companies" title="{!$Label.SL_Companies}" rendered="{!(IF(OR(objTask.ParentTaskId__c == null,objTask.ParentTaskId__c == $CurrentPage.Parameters.Id),true,false))}">
+            <apex:pageBlockButtons style="border-top: 0px;" location="top">
+                <apex:commandButton action="{!addRow}" value="{!$Label.SL_AddCompany}" rerender="form" status="loading">
+                    <apex:param value="Company" name="Add Company Record" assignTo="{!strAddRow}"/>
+                </apex:commandButton>
+            </apex:pageBlockButtons>
+            <apex:outputPanel id="ErrorCompany" rendered="{!isCompanyError}">
+                <apex:pageMessage summary="Duplicate Company {!strDuplicateDetails} Found" severity="warning" strength="3"/>
+            </apex:outputPanel>
+            <apex:pageBlockTable id="attendeesTable" value="{!lstMCompany}" var="item" rows="1000" rendered="{!lstMCompany.size != 0}" >
+                <apex:column width="10%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" action="{!deleteRecord}" status="loading" rerender="companies" style="color: #015BA7;">
+                            <apex:param value="Company" name="Delete Company Record" assignTo="{!strDelete}"/>
+                            <apex:param value="true" name="Del" assignTo="{!item.isDelete}"/>
+                        </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+
+                <apex:column headerValue="Company" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].AutoComplete_For_RelatedList__c), true, false)}">
+	                <apex:inputText id="inputTxtId" value="{!item.strSObjectName}" required="true" rendered="{!item.strMSobjectId == ''}">
+		            	<c:SL_LIB32_AutoComplete objectname="MeetingAttendee__c" queryObjectName="Account" autocomplete_textbox="{!$Component.inputTxtId}" isInlineVF="true" bgColor="#ADD8E6" fontSize="11" />
+		            	<apex:inputhidden id="inputTxtId_lkid" value="{!item.strSObjectId}" />
+		        	</apex:inputText>
+
+		        	<apex:outputField value="{!item.objSObject['Company__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.strMSobjectId)), NOT(ISBLANK(item.strMSobjectId))), true, false)}" />
+		        </apex:column>
+
+		        <apex:column headerValue="Company" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, NOT(lstMultiConnect[0].AutoComplete_For_RelatedList__c)), true, false)}">
+		        	<apex:outputField value="{!item.objSObject['Company__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.objSObject.Id)), NOT(ISBLANK(item.objSObject.Id))), true, false)}" />
+		        	<apex:inputField value="{!item.objSObject['Company__c']}"  rendered="{!IF(item.strMSobjectId == '', true, false)}" />
+		        </apex:column>
+
+				<apex:repeat value="{!$ObjectType.MeetingCompany__c.FieldSets.SL_MeetingCompany_Fieldsets}" var="e">
+               		<apex:column width="10%" headerValue="{!e.Label}" rendered="{!e.Label != 'Company'}">
+                    	<apex:inputField value="{!item.objSObject[e]}"/>
+                	</apex:column>
+                </apex:repeat>
+
+            </apex:pageBlockTable>
+
+            <c:SL_LIB22_MeetingSObject_NoRecords SObjectName="MeetingCompany__c" isRecordPresent="{!lstMCompany.size == 0}" />
+
+        </apex:pageBlock>
+<!--End of Company Page Block-->
+
+<!--Follow-up Task Page Block-->
+        <apex:pageBlock id="followupTask" title="Follow-up Task" rendered="{!(IF(AND(lstMultiConnect.size > 0, lstMultiConnect[0].FollowUp_Task__c == true ,OR(objTask.ParentTaskId__c == null,objTask.ParentTaskId__c == $CurrentPage.Parameters.Id)),true,false))}">
+            <apex:pageBlockButtons style="border-top: 0px;" location="top">
+                <apex:commandButton action="{!addRow}" value="{!$Label.SL_AddFollowUpTask}" rerender="form" status="loading">
+                    <apex:param value="FollowUpTask" name="Add Follow-Up Task" assignTo="{!strAddRow}"/>
+                </apex:commandButton>
+            </apex:pageBlockButtons>
+            <apex:pageBlockTable id="attendeesTable" value="{!lstFollowUpTask}" var="item" width="100%" rows="1000" rendered="{!lstFollowUpTask.size != 0}">
+                <apex:column width="5%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" action="{!deleteRecord}" rerender="followupTask" style="color: #015BA7;">
+                            <apex:param value="FollowUpTask" name="Delete FollowUp Task Record" assignTo="{!strDelete}"/>
+                            <apex:param value="true" name="Del" assignTo="{!item.isDelete}"/>
+                        </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+
+                <apex:repeat value="{!$ObjectType.Task.FieldSets.SL_FollowUpTask_FieldSets}" var="e" >
+               		<apex:column width="10%" headerValue="{!e.Label}">
+                    	<apex:inputField value="{!item.objSObject[e]}"/>
+                	</apex:column>
+                </apex:repeat>
+
+            </apex:pageBlockTable>
+
+            <c:SL_LIB22_MeetingSObject_NoRecords SObjectName="Task" isRecordPresent="{!lstFollowUpTask.size == 0}" />
+
+        </apex:pageBlock>
+
+        </apex:outputPanel>
+
+
+        <apex:outputPanel rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].Create_Events__c, strCheck == 'Event'), true, false)}">
+<!-- Start Page Block Buttons-->
+        <apex:pageBlock >
+            <apex:pageBlockButtons >
+                 <apex:commandButton action="{!SaveRedirect}" value="Save" rerender="ErrorMessage,pbo,form" status="loading"/>
+                <apex:actionRegion >
+                    <apex:commandButton action="{!MainCancel}" value="Cancel" rerender="Test"/>
+                </apex:actionRegion>
+            </apex:pageBlockButtons>
+<!-- End of Page Block Buttons-->
+
+<!--Start of Meeting Detail Section-->
+            <apex:pageBlockSection title="Meeting Event Details" id="pbse0" columns="2" >
+                 <apex:facet name="header">
+                    <span style="color: black">Meeting Details</span>
+                </apex:facet>
+                <apex:pageblocksectionItem >
+                    <apex:outputLabel value="Subject" />
+                    <apex:inputField value="{!objEvent.Subject}" required="true" />
+                </apex:pageblocksectionItem>
+                <apex:pageblocksectionItem >
+                    <apex:outputLabel value="Start" />
+                    <apex:inputField value="{!objEvent.StartDateTime}" required="true" />
+                </apex:pageblocksectionItem>
+                <apex:pageblocksectionItem >
+                    <apex:outputLabel value="End" />
+                    <apex:inputField value="{!objEvent.EndDateTime}" required="true" />
+                </apex:pageblocksectionItem>
+
+                <apex:pageblocksectionItem rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].Custom_Lookup_Related_To__c), true, false)}">
+		            	<apex:outputLabel value="Related To" />
+			            <apex:outputPanel >
+			            	<apex:selectList id="chooseRelatedTo" value="{!strSelectRelatedTo}" size="1">
+								<apex:selectOption itemValue="Account" itemLabel="Account"/>
+							</apex:selectList>
+							&nbsp;&nbsp;
+							<apex:inputHidden value="{!selectedRelatedId}" id="RelatedId" />
+							<apex:inputText value="{!selectedRelatedName}" id="RelatedName" />
+
+							<a href ="" style="cursor: pointer" onclick="javascript:return openRelatedToPopup(this.parentNode,('{!$Component.chooseRelatedTo}'))">
+								<img src="/s.gif" alt="Course Lookup (New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';"
+							     	 onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';"
+							     	 onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Related To Lookup (New Window)" />
+							</a>
+						</apex:outputPanel>
+					</apex:pageblocksectionItem>
+
+                <apex:repeat value="{!$ObjectType.Event.FieldSets.SL_EventFieldSets}" var="e" >
+                    <apex:inputField value="{!objEvent[e]}" required="{!e.Required}" rendered="{!IF(AND(strCheck == 'Event', e.Label != 'Parent Task', e.Label != 'Subject', e.Label != 'Start Date Time', e.Label != 'End Date Time'),true, false)}"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+<!-- End of Meeting Detail Section-->
+
+<!--Start of Meeting Notes Section-->
+            <apex:pageBlockSection title="Meeting Notes" id="pbse1" columns="1">
+             <apex:facet name="header">
+                    <span style="color: black">Meeting Notes</span>
+                </apex:facet>
+                <apex:repeat value="{!$ObjectType.Event.FieldSets.SL_Event_MeetingLogDetails_FieldSets}" var="e">
+                    <apex:inputField value="{!objEvent[e]}" style="width:790px; height:100px;" required="{!e.Required}"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+<!--  End of Meeting Notes Section-->
+
+        <apex:pageBlock id="eventAttendees" title="{!$Label.SL_ExternalParticipants}" rendered="{!(IF(OR(objEvent.ParentTaskId__c == null,objEvent.ParentTaskId__c == $CurrentPage.Parameters.Id),true,false))}">
+            <apex:pageBlockButtons style="border-top: 0px;" location="top">
+                <apex:commandButton action="{!addRow}" value="{!$Label.SL_AddAttendee}" rerender="form" status="loading">
+                    <apex:param value="Attendee" name="Add Attendee Record" assignTo="{!strAddRow}"/>
+                </apex:commandButton>
+            </apex:pageBlockButtons>
+            <apex:outputPanel id="ErrorAttendee" rendered="{!isAttendeeError}">
+                <apex:pageMessage summary="Duplicate Attendee {!strDuplicateDetails} Found" severity="warning" strength="3"/>
+            </apex:outputPanel>
+            <apex:pageBlockTable id="eventAttendeesTable" value="{!lstMAttendee}" var="item" rows="1000">
+                <apex:column width="10%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" action="{!deleteRecord}" rerender="eventAttendees" style="color: #015BA7;" >
+                            <apex:param value="Attendee" name="Delete Attendee Record" assignTo="{!strDelete}"/>
+                            <apex:param value="true" name="Del" assignTo="{!item.isDelete}"/>
+                        </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+
+                <apex:column headerValue="Attendee" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].AutoComplete_For_RelatedList__c), true, false)}">
+
+	                <apex:inputText id="inputTxtId" value="{!item.strSObjectName}" required="true" rendered="{!item.strMSobjectId == ''}">
+		            	<c:SL_LIB32_AutoComplete objectname="MeetingAttendee__c" queryObjectName="Contact" autocomplete_textbox="{!$Component.inputTxtId}" isInlineVF="true" bgColor="#ADD8E6" fontSize="11" />
+		            	<apex:inputhidden id="inputTxtId_lkid" value="{!item.strSObjectId}" />
+		        	</apex:inputText>
+
+		        	<apex:outputField value="{!item.objSObject['Attendee__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.strMSobjectId)), NOT(ISBLANK(item.strMSobjectId))), true, false)}" />
+		        </apex:column>
+
+				<apex:column headerValue="Company" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, NOT(lstMultiConnect[0].AutoComplete_For_RelatedList__c)), true, false)}">
+		        	<apex:inputField value="{!item.objSObject['Attendee__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.objSObject.Id)), NOT(ISBLANK(item.objSObject.Id))), true, false)}" />
+		        	<apex:outputField value="{!item.objSObject['Attendee__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.strMSobjectId)), NOT(ISBLANK(item.strMSobjectId))), true, false)}" />
+		        </apex:column>
+
+				<apex:repeat value="{!$ObjectType.MeetingAttendee__c.FieldSets.SL_MeetingAttendee_Fieldsets}" var="e">
+               		<apex:column width="10%" headerValue="{!e.Label}" rendered="{!e.Label != 'Attendee'}">
+                    	<apex:inputField value="{!item.objSObject[e]}"/>
+                	</apex:column>
+                </apex:repeat>
+
+            </apex:pageBlockTable>
+
+            <c:SL_LIB22_MeetingSObject_NoRecords SObjectName="MeetingAttendee__c" isRecordPresent="{!lstMAttendee.size == 0}" />
+
+        </apex:pageBlock>
+<!--  End Of Attendee Page BLock   -->
+<!--Staff Page Block-->
+        <apex:pageBlock id="eventStaff" title="{!$Label.SL_Participants}" rendered="{!(IF(OR(objEvent.ParentTaskId__c == null,objEvent.ParentTaskId__c == $CurrentPage.Parameters.Id),true,false))}">
+            <apex:pageBlockButtons style="border-top: 0px;" location="top">
+                <apex:commandButton action="{!addRow}" value="{!$Label.SL_AddStaff}" rerender="form" status="loading">
+                    <apex:param value="Staff" name="Add Staff Record" assignTo="{!strAddRow}"/>
+                </apex:commandButton>
+            </apex:pageBlockButtons>
+            <apex:outputPanel id="ErrorStaff" rendered="{!isStaffError}">
+                <apex:pageMessage summary="Duplicate Staff {!strDuplicateDetails} Found" severity="warning" strength="3"/>
+            </apex:outputPanel>
+            <apex:pageBlockTable id="eventStaffTable" value="{!lstMStaff}" var="item" rows="1000">
+                <apex:column width="10%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" action="{!deleteRecord}" rerender="eventStaff" style="color: #015BA7;">
+                            <apex:param value="Staff" name="Delete Staff Record" assignTo="{!strDelete}"/>
+                            <apex:param value="true" name="Del" assignTo="{!item.isDelete}"/>
+                         </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+
+				<apex:column headerValue="Employee" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].AutoComplete_For_RelatedList__c), true, false)}">
+	                <apex:inputText id="inputTxtId" value="{!item.strSObjectName}" required="true" rendered="{!item.strMSobjectId == ''}">
+		            	<c:SL_LIB32_AutoComplete objectname="MeetingAttendee__c" queryObjectName="Contact" autocomplete_textbox="{!$Component.inputTxtId}" isInlineVF="true" bgColor="#ADD8E6" fontSize="11" />
+		            	<apex:inputhidden id="inputTxtId_lkid" value="{!item.strSObjectId}" />
+		        	</apex:inputText>
+
+		        	<apex:outputField value="{!item.objSObject['Contact__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.strMSobjectId)), NOT(ISBLANK(item.strMSobjectId))), true, false)}" />
+		        </apex:column>
+
+		        <apex:column headerValue="Company" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, NOT(lstMultiConnect[0].AutoComplete_For_RelatedList__c)), true, false)}">
+		        	<apex:inputField value="{!item.objSObject['Contact__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.objSObject.Id)), NOT(ISBLANK(item.objSObject.Id))), true, false)}" />
+		        	<apex:outputField value="{!item.objSObject['Contact__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.strMSobjectId)), NOT(ISBLANK(item.strMSobjectId))), true, false)}" />
+		        </apex:column>
+
+				<apex:repeat value="{!$ObjectType.MeetingStaff__c.FieldSets.SL_MeetingStaff_Fieldsets}" var="e">
+               		<apex:column width="10%" headerValue="{!e.Label}" rendered="{!e.Label != 'Employee'}">
+                    	<apex:inputField value="{!item.objSObject[e]}"/>
+                	</apex:column>
+                </apex:repeat>
+
+            </apex:pageBlockTable>
+
+            <c:SL_LIB22_MeetingSObject_NoRecords SObjectName="MeetingStaff__c" isRecordPresent="{!lstMStaff.size == 0}" />
+
+        </apex:pageBlock>
+<!--End of Staff Page Block -->
+<!--Company Page Block-->
+        <apex:pageBlock id="eventCompanies" title="{!$Label.SL_Companies}" rendered="{!(IF(OR(objEvent.ParentTaskId__c == null,objEvent.ParentTaskId__c == $CurrentPage.Parameters.Id),true,false))}">
+            <apex:pageBlockButtons style="border-top: 0px;" location="top">
+                <apex:commandButton action="{!addRow}" value="{!$Label.SL_AddCompany}" rerender="form" status="loading">
+                    <apex:param value="Company" name="Add Company Record" assignTo="{!strAddRow}"/>
+                </apex:commandButton>
+            </apex:pageBlockButtons>
+            <apex:outputPanel id="ErrorCompany" rendered="{!isCompanyError}">
+                <apex:pageMessage summary="Duplicate Company {!strDuplicateDetails} Found" severity="warning" strength="3"/>
+            </apex:outputPanel>
+            <apex:pageBlockTable id="eventCompaniesTable" value="{!lstMCompany}" var="item" rows="1000">
+                <apex:column width="10%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" action="{!deleteRecord}" rerender="eventCompanies" style="color: #015BA7;">
+                            <apex:param value="Company" name="Delete Company Record" assignTo="{!strDelete}"/>
+                            <apex:param value="true" name="Del" assignTo="{!item.isDelete}"/>
+                        </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+
+                <apex:column headerValue="Company" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, lstMultiConnect[0].AutoComplete_For_RelatedList__c), true, false)}">
+	                <apex:inputText id="inputTxtId" value="{!item.strSObjectName}" required="true" rendered="{!item.strMSobjectId == ''}">
+		            	<c:SL_LIB32_AutoComplete objectname="MeetingAttendee__c" queryObjectName="Account" autocomplete_textbox="{!$Component.inputTxtId}" isInlineVF="true" bgColor="#ADD8E6" fontSize="11" />
+		            	<apex:inputhidden id="inputTxtId_lkid" value="{!item.strSObjectId}" />
+		        	</apex:inputText>
+
+		        	<apex:outputField value="{!item.objSObject['Company__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.strMSobjectId)), NOT(ISBLANK(item.strMSobjectId))), true, false)}" />
+		        </apex:column>
+
+		        <apex:column headerValue="Company" width="10%" rendered="{!If(AND(lstMultiConnect.size > 0, NOT(lstMultiConnect[0].AutoComplete_For_RelatedList__c)), true, false)}">
+		        	<apex:inputField value="{!item.objSObject['Company__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.objSObject.Id)), NOT(ISBLANK(item.objSObject.Id))), true, false)}" />
+		        	<apex:outputField value="{!item.objSObject['Company__c']}"  rendered="{!IF(AND(NOT(ISNULL(item.strMSobjectId)), NOT(ISBLANK(item.strMSobjectId))), true, false)}" />
+		        </apex:column>
+
+				<apex:repeat value="{!$ObjectType.MeetingCompany__c.FieldSets.SL_MeetingCompany_Fieldsets}" var="e">
+               		<apex:column width="10%" headerValue="{!e.Label}" rendered="{!e.Label != 'Company'}">
+                    	<apex:inputField value="{!item.objSObject[e]}"/>
+                	</apex:column>
+                </apex:repeat>
+
+            </apex:pageBlockTable>
+
+            <c:SL_LIB22_MeetingSObject_NoRecords SObjectName="MeetingCompany__c" isRecordPresent="{!lstMCompany.size == 0}" />
+
+        </apex:pageBlock>
+<!--End of Company Page Block-->
+
+<!--Follow-up Task Page Block-->
+        <apex:pageBlock id="eventF" title="Follow-up Task" rendered="{!(IF(AND(lstMultiConnect.size > 0, lstMultiConnect[0].FollowUp_Task__c == true ,OR(objEvent.ParentTaskId__c == null,objEvent.ParentTaskId__c == $CurrentPage.Parameters.Id)),true,false))}">
+            <apex:pageBlockButtons style="border-top: 0px;" location="top">
+                <apex:commandButton action="{!addRow}" value="{!$Label.SL_AddFollowUpTask}" rerender="form" status="loading">
+                    <apex:param value="FollowUpTask" name="Add Follow-Up Task" assignTo="{!strAddRow}"/>
+                </apex:commandButton>
+            </apex:pageBlockButtons>
+            <apex:pageBlockTable id="eventFollowUpTable" value="{!lstFollowUpTask}" var="item" width="100%" rows="1000" rendered="{!lstFollowUpTask.size != 0}" >
+                <apex:column width="5%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" action="{!deleteRecord}" rerender="eventFollowupTask" style="color: #015BA7;">
+                            <apex:param value="FollowUpTask" name="Delete FollowUp Task Record" assignTo="{!strDelete}"/>
+                            <apex:param value="true" name="Del" assignTo="{!item.isDelete}"/>
+                        </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+
+                <apex:repeat value="{!$ObjectType.Task.FieldSets.SL_FollowUpTask_FieldSets}" var="e">
+               		<apex:column width="10%" headerValue="{!e.Label}">
+                    	<apex:inputField value="{!item.objSObject[e]}"/>
+                	</apex:column>
+                </apex:repeat>
+
+            </apex:pageBlockTable>
+
+            <c:SL_LIB22_MeetingSObject_NoRecords SObjectName="Task" isRecordPresent="{!lstFollowUpTask.size == 0}" />
+
+        </apex:pageBlock>
+
+        </apex:outputPanel>
+<!--End of Follow-up Task Page Block-->
+
+    </apex:outputPanel>
+<!--End of Task Page Block-->
+
+    <apex:actionstatus id="loading" startText="Requesting...">
+         <apex:facet name="start">
+            <div id="salesforceSource_blurybackground" style="position:absolute; left:1px; top:1px; width:100%; height:100%; text-align:center; vertical-align: middle; background-color: #dcdcdc; opacity:0.7;filter:alpha(opacity=60)"></div>
+            <div id="ManageMembersViewport_loading" class="waitingSearchDiv" style="width: 100%; height: 80%; display: ''; ">
+                <div style="width: 144px;vertical-align: middle;" class="waitingHolder">
+                <table align="center" valign="top" style="width: 100%; height: 30%">
+                <tr align="center" valign="top" style="width: 100%; height: 30%">
+                    <td valign="top"><img src="/img/loading.gif"/><span class="waitingDescription">Loading...</span></td>
+                </tr>
+                </table>
+                </div>
+            </div>
+            <div id="ManageMembersViewport_loading" class="waitingSearchDiv" style="width: 100%; height: 100%; display: ''; "> </div>
+            <script>document.getElementById('ManageMembersViewport_loading').height = window.innerHeight * (3/4);</script>
+         </apex:facet>
+         <apex:facet name="stop"></apex:facet>
+      </apex:actionstatus>
+
+    </apex:form>
+</apex:page>

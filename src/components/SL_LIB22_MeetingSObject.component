@@ -1,0 +1,101 @@
+<apex:component controller="SL_LIB22_MeetingSObject_Controller" allowDML="true">
+
+    <apex:attribute name="type" type="String" description="Use "/>
+    <apex:attribute name="customLabel" type="String" description="Use " />
+    <apex:attribute name="SObjectName" type="String" description="Use " assignTo="{!strSObjectName}" />
+    <apex:attribute name="meetingLogId" type="String" description="Use " assignTo="{!strSObjectMLogId}" />
+
+    <apex:componentBody >
+
+        <script>
+            function callDelete(paramId)
+            {
+                callDeleteRecords(paramId);
+            }
+
+        </script>
+
+        <apex:inputHidden value="{!strSObjectName}" />
+        <apex:inputHidden value="{!strSObjectMLogId}" />
+
+        <apex:actionFunction name="callDeleteRecords" action="{!deleteSObjectRecord}" rerender="form,pbMSObject" >
+                <apex:param name="objId" value="" assignTo="{!strSobjectId}"/>
+            </apex:actionFunction>
+
+        <apex:pageBlock id="pbMSObject" title="{!customLabel}" rendered="{!IF(type != 'Report', true, false)}">
+            <apex:pageBlockTable id="pbTMSObject" value="{!lstSObject}" var="item" rows="1000" rendered="{!lstSObject.size != 0}">
+                <apex:column width="10%">
+                    <apex:actionRegion >
+                        <apex:commandLink value="Delete" onclick="callDelete('{!item.strMSobjectId}');" rerender="form,pbMSObject" status="loading" style="color:#015BA7;">
+                        </apex:commandLink>
+                    </apex:actionRegion>
+                </apex:column>
+
+                <apex:repeat value="{!lstFields}" var="e" rendered="{!lstSObject.size != 0}">
+                    <apex:column width="10%" headerValue="{!mapFieldAPI_Label[e]}">
+                        <apex:outputField value="{!item.objSObject[e]}" />
+                    </apex:column>
+                </apex:repeat>
+            </apex:pageBlockTable>
+
+			<c:SL_LIB22_MeetingSObject_NoRecords SObjectName="{!SObjectName}" isRecordPresent="{!lstSObject.size == 0}" />
+
+        </apex:pageBlock>
+
+        <apex:outputpanel rendered="{!IF(type == 'Report', true, false)}">
+
+            <table width="100%" class="reportTitle" cellspacing="5" cellpadding="0" >
+                <thead>
+                    <tr>
+                        <th class="bottomBorder">
+                            <span style="font-size: 12pt;font-weight: bold"> {!customLabel}</span>
+                        </th>
+                    </tr>
+                    <tr>
+                        <apex:repeat value="{!lstFields}" var="e">
+                            <th width="10%">
+                                <span style="font-weight: bold" class="fontSize">
+                                    {!mapFieldAPI_Label[e]}
+                                </span>
+                            </th>
+                        </apex:repeat>
+
+                    </tr>
+                    <tr>
+                        <td style="border-top: 1px solid;" colspan="{!lstFields.size}"></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <apex:repeat value="{!lstSObject}" var="item" rendered="{!lstSObject.size != 0}">
+                        <tr style="page-break-inside: avoid !important;">
+                            <apex:repeat value="{!lstFields}" var="e">
+                                <td class="recordfontSize" width="10% !important">
+                                    <apex:outputPanel >
+                                        <apex:outputField value="{!item.objSObject[e]}" rendered="{!IF(AND(item.objSObject[e] != true, item.objSObject[e] != false), true, false)}" />
+                                        <apex:outputPanel rendered="{!If(item.objSObject[e] == false, true, false)}">
+                                            <img src="{!($Resource.SL_MeetingLog_UnChecked_Checkbox)}" />
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!If(item.objSObject[e] == true, true, false)}">
+                                            <img src="{!($Resource.SL_MeetingLog_Checked_Checkbox)}" />
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </apex:repeat>
+                    <tr>
+                        <td>
+                            <apex:outputLabel value="No Records to display" style="font-family: Arial; font-size: 10pt;" rendered="{!lstSObject.size == 0 }" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border-top: 1px solid;" colspan="{!lstFields.size}"><br /><br /></td>
+                    </tr>
+                </tbody>
+            </table>
+        </apex:outputpanel>
+
+    </apex:componentBody>
+
+</apex:component>

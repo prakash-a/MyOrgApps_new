@@ -1,0 +1,2 @@
+<apex:page standardcontroller="Event" extensions="SL_LIB22_MeetingLog_Redirect" action="{!RedirectEventDetail}">
+</apex:page>
